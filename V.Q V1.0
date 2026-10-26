@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VirtualAqua</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #071d2e, #020b14 55%, #000);
+      color: white;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(180deg, rgba(28, 111, 164, 0.2), rgba(0,0,0,0)),
+        radial-gradient(circle at center, rgba(50, 180, 255, 0.12), transparent 60%);
+    }
+
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(120, 220, 255, 0.5);
+      width: 300px;
+      height: 300px;
+      animation: ripple 6s infinite ease-out;
+      opacity: 0;
+    }
+
+    .ripple:nth-child(1) { animation-delay: 0s; }
+    .ripple:nth-child(2) { animation-delay: 1.5s; }
+    .ripple:nth-child(3) { animation-delay: 3s; }
+    .ripple:nth-child(4) { animation-delay: 4.5s; }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0.5);
+        opacity: 0.8;
+      }
+      70% {
+        opacity: 0.4;
+      }
+      100% {
+        transform: scale(2.3);
+        opacity: 0;
+      }
+    }
+
+    .panel {
+      position: relative;
+      z-index: 2;
+      width: min(760px, 85vw);
+      padding: 28px;
+      border-radius: 24px;
+      background: rgba(8, 23, 36, 0.7);
+      border: 1px solid rgba(120, 200, 255, 0.35);
+      box-shadow: 0 0 30px rgba(77, 204, 255, 0.25);
+      backdrop-filter: blur(8px);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #9be8ff;
+      text-shadow: 0 0 18px rgba(110, 215, 255, 0.8);
+    }
+
+    .status {
+      background: rgba(30, 180, 120, 0.18);
+      border: 1px solid rgba(100, 255, 162, 0.4);
+      color: #9af7c0;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+    }
+
+    .projector-box {
+      background: rgba(14, 39, 55, 0.9);
+      border: 1px solid rgba(130, 220, 255, 0.3);
+      border-radius: 20px;
+      padding: 20px;
+      min-height: 260px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .projector-screen {
+      background: linear-gradient(180deg, #082833, #0d4563 40%, #081f2c);
+      min-height: 170px;
+      border-radius: 16px;
+      border: 1px solid rgba(157, 234, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .projector-screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+      animation: beam 4s linear infinite;
+    }
+
+    @keyframes beam {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(100%); }
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.2s ease;
+      background: rgba(87, 167, 255, 0.18);
+      color: white;
+      border: 1px solid rgba(120, 215, 255, 0.35);
+    }
+
+    button:hover {
+      background: rgba(87, 167, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(14, 39, 55, 0.9);
+      border-radius: 18px;
+      border: 1px solid rgba(130, 220, 255, 0.3);
+      padding: 18px;
+    }
+
+    .card h3 {
+      margin: 0 0 12px 0;
+      font-size: 1rem;
+      color: #a9edff;
+    }
+
+    .meter {
+      height: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .fill {
+      height: 100%;
+      width: 72%;
+      background: linear-gradient(90deg, #3dd0ff, #61ffcb);
+      border-radius: inherit;
+    }
+
+    .eater {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: bold;
+      color: #d9f8ff;
+    }
+
+    .orb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #70e9ff;
+      box-shadow: 0 0 12px rgba(112, 233, 255, 0.8);
+    }
+
+    @media (max-width: 700px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+      .brand { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="ripple"></div>
+    <div class="ripple"></div>
+    <div class="ripple"></div>
+    <div class="ripple"></div>
+
+    <div class="panel">
+      <div class="topbar">
+        <div class="brand">VirtualAqua</div>
+        <div class="status">Projector Online</div>
+      </div>
+
+      <div class="content">
+        <div class="projector-box">
+          <div>
+            <h2 style="margin:0 0 14px 0;">Projector Control</h2>
+          </div>
+
+          <div class="projector-screen"></div>
+
+          <div class="controls">
+            <button>Power</button>
+            <button>Input</button>
+            <button>Brightness</button>
+            <button>Mode</button>
+          </div>
+        </div>
+
+        <div class="side">
+          <div class="card">
+            <h3>Water Flow</h3>
+            <div class="eater">
+              <span class="orb"></span>
+              <span>Eater Active</span>
+            </div>
+            <div class="meter">
+              <div class="fill"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Projector Status</h3>
+            <div>Model: AquaBeam X8</div>
+            <div>Temp: 36°C</div>
+            <div>Signal: 4K HDMI</div>
+          </div>
+
+          <div class="card">
+            <h3>Aquatic Scene</h3>
+            <div>Ripple Mode: Calm</div>
+            <div>Light: Blue Glow</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VirtualAqua</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #071d2e, #020b14 55%, #000);
+      color: white;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(180deg, rgba(28, 111, 164, 0.15), rgba(0,0,0,0)),
+        radial-gradient(circle at center, rgba(50, 180, 255, 0.10), transparent 60%);
+    }
+
+    .ripple-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .bg-ripple {
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: 2px solid rgba(120, 220, 255, 0.28);
+      transform: scale(0.2);
+      opacity: 0;
+      animation: floatRipple 6s ease-out infinite;
+    }
+
+    @keyframes floatRipple {
+      0% {
+        transform: scale(0.2);
+        opacity: 0.7;
+      }
+      50% {
+        opacity: 0.4;
+      }
+      100% {
+        transform: scale(2.3);
+        opacity: 0;
+      }
+    }
+
+    .panel {
+      position: relative;
+      z-index: 2;
+      width: min(760px, 85vw);
+      padding: 28px;
+      border-radius: 24px;
+      background: rgba(8, 23, 36, 0.7);
+      border: 1px solid rgba(120, 200, 255, 0.35);
+      box-shadow: 0 0 30px rgba(77, 204, 255, 0.25);
+      backdrop-filter: blur(8px);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #9be8ff;
+      text-shadow: 0 0 18px rgba(110, 215, 255, 0.8);
+    }
+
+    .status {
+      background: rgba(30, 180, 120, 0.18);
+      border: 1px solid rgba(100, 255, 162, 0.4);
+      color: #9af7c0;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+    }
+
+    .projector-box {
+      background: rgba(14, 39, 55, 0.9);
+      border: 1px solid rgba(130, 220, 255, 0.3);
+      border-radius: 20px;
+      padding: 20px;
+      min-height: 260px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .projector-screen {
+      position: relative;
+      background: linear-gradient(180deg, #082833, #0d4563 40%, #081f2c);
+      min-height: 170px;
+      border-radius: 16px;
+      border: 1px solid rgba(157, 234, 255, 0.3);
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .projector-screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,255,255,0.08) 50%,
+        transparent 100%
+      );
+      animation: beam 4s linear infinite;
+    }
+
+    @keyframes beam {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(100%); }
+    }
+
+    .touch-ripple {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid rgba(168, 243, 255, 0.9);
+      background: rgba(128, 228, 255, 0.12);
+      box-shadow: 0 0 18px rgba(128, 228, 255, 0.5);
+      transform: translate(-50%, -50%) scale(0.2);
+      animation: touchWave 1.3s ease-out forwards;
+      pointer-events: none;
+    }
+
+    .touch-ripple::before,
+    .touch-ripple::after {
+      content: "";
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      border: 1px solid rgba(127, 222, 255, 0.55);
+      animation: outerWave 1.3s ease-out forwards;
+    }
+
+    .touch-ripple::after {
+      inset: -20px;
+      animation-delay: 0.12s;
+    }
+
+    @keyframes touchWave {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.15);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(4.5);
+      }
+    }
+
+    @keyframes outerWave {
+      0% {
+        opacity: 0.8;
+        transform: scale(0.7);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.8);
+      }
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.2s ease;
+      background: rgba(87, 167, 255, 0.18);
+      color: white;
+      border: 1px solid rgba(120, 215, 255, 0.35);
+    }
+
+    button:hover {
+      background: rgba(87, 167, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(14, 39, 55, 0.9);
+      border-radius: 18px;
+      border: 1px solid rgba(130, 220, 255, 0.3);
+      padding: 18px;
+    }
+
+    .card h3 {
+      margin: 0 0 12px 0;
+      font-size: 1rem;
+      color: #a9edff;
+    }
+
+    .meter {
+      height: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .fill {
+      height: 100%;
+      width: 72%;
+      background: linear-gradient(90deg, #3dd0ff, #61ffcb);
+      border-radius: inherit;
+    }
+
+    .eater {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: bold;
+      color: #d9f8ff;
+    }
+
+    .orb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #70e9ff;
+      box-shadow: 0 0 12px rgba(112, 233, 255, 0.8);
+    }
+
+    @media (max-width: 700px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+      .brand { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="ripple-bg">
+      <div class="bg-ripple" style="left:12%; top:20%; animation-delay:0s;"></div>
+      <div class="bg-ripple" style="left:62%; top:34%; animation-delay:1.5s;"></div>
+      <div class="bg-ripple" style="left:48%; top:68%; animation-delay:3s;"></div>
+      <div class="bg-ripple" style="left:80%; top:12%; animation-delay:4.5s;"></div>
+    </div>
+
+    <div class="panel">
+      <div class="topbar">
+        <div class="brand">VirtualAqua</div>
+        <div class="status">Projector Online</div>
+      </div>
+
+      <div class="content">
+        <div class="projector-box">
+          <div>
+            <h2 style="margin:0 0 14px 0;">Projector Control</h2>
+          </div>
+
+          <div id="projectorScreen" class="projector-screen"></div>
+
+          <div class="controls">
+            <button>Power</button>
+            <button>Input</button>
+            <button>Brightness</button>
+            <button>Mode</button>
+          </div>
+        </div>
+
+        <div class="side">
+          <div class="card">
+            <h3>Water Flow</h3>
+            <div class="eater">
+              <span class="orb"></span>
+              <span>Eater Active</span>
+            </div>
+            <div class="meter">
+              <div class="fill"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Projector Status</h3>
+            <div>Model: AquaBeam X8</div>
+            <div>Temp: 36°C</div>
+            <div>Signal: 4K HDMI</div>
+          </div>
+
+          <div class="card">
+            <h3>Aquatic Scene</h3>
+            <div>Ripple Mode: Touch</div>
+            <div>Light: Blue Glow</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const projectorScreen = document.getElementById("projectorScreen");
+
+    function createRipple(x, y) {
+      const ripple = document.createElement("div");
+      ripple.className = "touch-ripple";
+      ripple.style.left = x + "px";
+      ripple.style.top = y + "px";
+      projectorScreen.appendChild(ripple);
+
+      setTimeout(() => {
+        ripple.remove();
+      }, 1300);
+    }
+
+    function handlePointer(event) {
+      const rect = projectorScreen.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      createRipple(x, y);
+    }
+
+    projectorScreen.addEventListener("pointerdown", handlePointer);
+    projectorScreen.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      if (touch) handlePointer(touch);
+    }, { passive: true });
+  </script>
+</body>
+</html>
