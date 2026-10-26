@@ -1,2 +1,2 @@
 # Virtualaqua
-Want your place look like its a pool? Try this app
+This is for transforming your room into an pool
